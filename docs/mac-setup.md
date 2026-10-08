@@ -35,7 +35,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-PlaywrightのChromiumは、この模擬画面テスト用です。インストールしても利用中のTKCブラウザやログイン済みプロファイルに接続するわけではありません。GitHub ActionsにもmacOS / Node.js 24で同じ模擬検証を追加しました。CIのMacと利用者のMac、実TKCの動作確認は区別します。
+PlaywrightのChromiumは、この模擬画面テスト用です。インストールしても利用中のTKCブラウザやログイン済みプロファイルに接続するわけではありません。2026-10-09にGitHub ActionsのmacOS / Node.js 24でビルド・29件のロジックテスト・5件のブラウザテストが成功しました。[検証記録](acceptance.md)。CIのMacと利用者のMac、実TKCの動作確認は区別します。
 
 ## 3. Mac側で実画面を確認する
 

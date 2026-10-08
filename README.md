@@ -73,7 +73,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-2026-10-09のWindowsでの結果は **ビルド成功、29件のロジックテスト、5件のブラウザテスト成功**。GitHub ActionsにmacOS / Node.js 24の同じ検証を追加しました。テストは模擬データ専用です。利用者のMacと実TKCの受入完了を意味しません。項目ごとの確認範囲は [受入基準との対応](docs/acceptance.md) を参照してください。
+2026-10-09の結果は **ビルド成功、29件のロジックテスト、5件のブラウザテスト成功**。Windowsのローカル・CIと、GitHub ActionsのmacOS / Node.js 24で同じ検証が成功しました。テストは模擬データ専用です。利用者のMacと実TKCの受入完了を意味しません。項目ごとの確認範囲は [受入基準との対応](docs/acceptance.md) を参照してください。
 
 ## バックアップと復元
 
