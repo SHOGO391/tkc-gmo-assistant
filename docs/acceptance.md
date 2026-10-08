@@ -7,7 +7,8 @@
 - `npm run check`：TypeScriptビルド成功、ロジックテスト29件成功（従来23件＋引継ぎ6件）。
 - `npm run test:e2e`：Chromiumによるブラウザテスト5件成功（従来4件＋引継ぎ1件）。
 - `npm run build` 後の `npm start`：ローカル画面・APIの起動成功。HTTP 200と模擬明細10件の表示を確認。
-- 初期版はNode.js 24.21.0でもロジックテスト23件成功。今回の引継ぎ追加後はWindowsのNode.js 25.2.1で29件とブラウザ5件を実施。
+- 初期版はNode.js 24.21.0でもロジックテスト23件成功。今回の引継ぎ追加後はWindowsのNode.js 25.2.1で29件とブラウザ5件を実施。引継ぎ追加のコミット `9485387` はGitHub ActionsのWindows / Node.js 24でもビルド・29件・5件が成功した。
+- 利用者のTKCが別Macのブラウザで動作すると確認し、macOS / Node.js 24のCIを追加。macOSの検証結果は実行後に記録する。利用者のMac・実TKCはまだ未検証。
 - 画面画像 `test-results/preview-desktop.png`：模擬データの表示を目視確認。Gitには含めない。
 - GMO実CSV・TKC実取引先一覧：0件。実TKC画面の操作：0件。
 - TKC書込み：書込み実装がなく、実行APIも拒否。P1の操作で外部処理履歴が作られないことを確認。実TKC側の変更履歴の読取りは未接続。

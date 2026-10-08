@@ -10,7 +10,7 @@ GMO入出金CSVとTKC取引先一覧をローカルで照合し、新規取引�
 
 ## 起動
 
-Node.js 24以上、npmを使用します。WindowsではPowerShellで実行してください。検証環境はWindows / Node.js 25.2.1です。
+Node.js 24以上、npmを使用します。WindowsではPowerShellで実行してください。利用者のTKCは別のMacのブラウザで動作しているため、導入先はそのMacです。[Macの起動・引継ぎ手順](docs/mac-setup.md)を用意しました。現在のローカル検証環境はWindows / Node.js 25.2.1です。
 
 ```powershell
 git clone https://github.com/SHOGO391/tkc-gmo-assistant.git
@@ -73,7 +73,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-2026-10-08の結果は **ビルド成功、23件のロジックテスト、4件のブラウザテスト成功**。テストは模擬データ専用です。実TKCの受入完了を意味しません。項目ごとの確認範囲は [受入基準との対応](docs/acceptance.md) を参照してください。
+2026-10-09のWindowsでの結果は **ビルド成功、29件のロジックテスト、5件のブラウザテスト成功**。GitHub ActionsにmacOS / Node.js 24の同じ検証を追加しました。テストは模擬データ専用です。利用者のMacと実TKCの受入完了を意味しません。項目ごとの確認範囲は [受入基準との対応](docs/acceptance.md) を参照してください。
 
 ## バックアップと復元
 
