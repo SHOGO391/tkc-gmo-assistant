@@ -12,6 +12,8 @@ GMO入出金CSVとTKC取引先一覧をローカルで照合し、新規取引�
 
 Node.js 24以上、npmを使用します。WindowsではPowerShellで実行してください。利用者のTKCは別のMacのブラウザで動作しているため、導入先はそのMacです。[Macの起動・引継ぎ手順](docs/mac-setup.md)を用意しました。現在のローカル検証環境はWindows / Node.js 25.2.1です。
 
+Mac用の配布ZIPは、展開して `Start-Mac.command` をダブルクリックすると起動します。コンパイル済みコードを同梱し、Node.jsがない場合は公式の24.21.0をSHA-256検証後に使用します。初回は依存パッケージのダウンロードにインターネットが必要です。TKC接続や登録・計上は開始しません。配布物はGitHub Actionsの成功した実行のArtifactsにある `tkc-gmo-assistant-mac` から取得できます。
+
 ```powershell
 git clone https://github.com/SHOGO391/tkc-gmo-assistant.git
 Set-Location tkc-gmo-assistant
@@ -27,6 +29,8 @@ npm run dev
 npm run build
 npm start
 ```
+
+起動準備の診断は `npm run doctor -- --json` です。業務DBは開かず、Node.js・SQLiteのメモリ上の動作・依存パッケージ・保存先への一時ファイル作成を確認します。診断成功はTKC実接続の確認にはなりません。配布ZIPの作成は `npm run bundle:mac`、配布物の検証は `npm run verify:mac-bundle` を使います。開発側のZIP作成にはPythonが必要ですが、ZIPを使うMacには不要です。
 
 ポート・保存先を変更する場合は環境変数を指定します。`.env.example` は記入例で、アプリは `.env` を自動読込みしません。
 

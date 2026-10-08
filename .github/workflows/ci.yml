@@ -23,3 +23,13 @@ jobs:
       - run: npm run check
       - run: npx playwright install chromium
       - run: npm run test:e2e
+      - run: npm run bundle:mac
+      - run: npm run verify:mac-bundle
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'macos-latest'
+        with:
+          name: tkc-gmo-assistant-mac
+          path: |
+            private/tkc-gmo-assistant-mac.zip
+            private/tkc-gmo-assistant-mac.zip.sha256
+          retention-days: 14

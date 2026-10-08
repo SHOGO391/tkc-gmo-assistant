@@ -17,6 +17,10 @@
 
 Windowsのブラウザ一覧を確認しても、別のMacのTKC画面は確認できません。Mac側での観察に切り替えます。[Macの準備手順](mac-setup.md)を参照してください。製品名、対象ブラウザ、実CSVは未確認です。
 
+2026-10-09にOpenAIの公式接続資料を調査しました。MacのCodexでConnectionsからホスト登録し、そのMacのComputer Useとブラウザ拡張を設定する経路があります。[Remote connections](https://learn.chatgpt.com/docs/remote-connections)、[Chrome extension](https://learn.chatgpt.com/docs/chrome-extension)。この環境では登録済みMac・Mac向けSSH設定・操作可能なMacブラウザを確認できず、実画面の観察はまだ0件です。公開資料を確認できたことと、利用者のMacで使えることは分けます。段階的な機能提供の有無も実機で確認が必要です。
+
+独立して進められる準備としてMac起動用ZIP、Node.js公式配布物のSHA-256検証、業務DBを開かない環境診断を実装しました。ZIP起動はプレビューの準備であり、TKCへの接続・取込・計上を実装したという意味ではありません。
+
 ## 公式資料で確認した内容
 
 GMOあおぞらネット銀行の公式FAQでは、法人向け入出金明細にPDFと3種類のCSV（全銀固定長・全銀CSV・当社CSV）の出力が案内されています。個人向けは当社CSVです。残高・明細画面やファイル出力の導線が記載されています。ただし、利用者が使う契約区分・CSV種類・実際の列・明細IDは確認できていません。[GMO公式FAQ](https://help.gmo-aozora.com/faqs/66865419efe214ffd63424ae/)

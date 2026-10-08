@@ -13,6 +13,9 @@
     "demo": "tsx src/cli.ts demo",
     "cli": "tsx src/cli.ts",
     "backup": "tsx src/cli.ts backup",
+    "doctor": "tsx src/doctor.ts",
+    "bundle:mac": "npm run build && python scripts/build_mac_bundle.py",
+    "verify:mac-bundle": "python scripts/verify_mac_bundle.py",
     "check": "npm run build && npm test"
   },
   "dependencies": {
