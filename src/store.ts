@@ -1,6 +1,7 @@
 import { DatabaseSync, backup } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { buildHandoff } from './handoff.js';
 import { InputError, hash, canonicalJson, id, now, norm, required, validateContext, readCsv, checkMapping, normalizeRow, type CsvMapping, type Encoding, type JobContext, type Rule } from './domain.js';
 
 type Json = Record<string, any>;
@@ -24,6 +25,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS rules(id TEXT PRIMARY KEY, scope TEXT NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS plans(id TEXT PRIMARY KEY, job_id TEXT NOT NULL REFERENCES jobs(id), data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS operations(id TEXT PRIMARY KEY, job_id TEXT NOT NULL REFERENCES jobs(id), tx_id TEXT REFERENCES tx(id), data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS handoff_notes(seq INTEGER PRIMARY KEY AUTOINCREMENT, job_id TEXT NOT NULL REFERENCES jobs(id), data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS audit(seq INTEGER PRIMARY KEY AUTOINCREMENT, job_id TEXT NOT NULL REFERENCES jobs(id), at TEXT NOT NULL, action TEXT NOT NULL, data TEXT NOT NULL);
       PRAGMA user_version=1;`);
   }
@@ -233,6 +235,23 @@ export class Store {
   planStatus(planId:string) { const p=this.get('plans',planId),a=this.analysis(p.jobId);return {...p,rows:p.rows.map((r:Json)=>({...r,valid:a.transactions.find(t=>t.id===r.txId)?.rowHash===r.rowHash}))}; }
   pause(jobId:string,paused:boolean) { return this.atomic(()=>{const job=this.get('jobs',jobId);job.paused=paused;this.put('jobs',job);this.audit(jobId,paused?'job.paused':'job.resumed',{unknownOperations:this.rows('SELECT data FROM operations WHERE job_id=?',jobId).map(r=>JSON.parse(r.data)).filter(o=>o.state==='unknown').length});return job;}); }
   observe(jobId:string,observation:Json) { return this.atomic(()=>{const j=this.get('jobs',jobId);j.observed=observation;this.put('jobs',j);this.audit(jobId,'adapter.observed',observation);return observation;}); }
+  handoff(jobId:string) {
+    const notes=this.rows('SELECT data FROM handoff_notes WHERE job_id=? ORDER BY seq',jobId).map(r=>JSON.parse(r.data));
+    return buildHandoff(this.analysis(jobId),notes);
+  }
+  recordHandoff(jobId:string,v:any) {
+    return this.atomic(()=>{
+      const item=this.handoff(jobId).items.find(i=>i.id===v.itemId);
+      if(!item||item.contentHash!==v.contentHash)throw new InputError('引継ぎ対象が変更または解消されています。一覧を更新して確認してください');
+      if(!['waiting','response-recorded'].includes(v.status))throw new InputError('回答状態が不正です');
+      const response={id:id(),itemId:item.id,contentHash:item.contentHash,status:v.status,
+        owner:required(v.owner,'担当者'),actor:required(v.actor,'記録者'),note:required(v.note,'確認依頼または回答'),
+        evidence:v.status==='response-recorded'?required(v.evidence,'回答の根拠'):String(v.evidence??''),at:now()};
+      // Handoff notes remain writable while paused. They do not change transaction or TKC states.
+      this.run('INSERT INTO handoff_notes(job_id,data) VALUES(?,?)',jobId,JSON.stringify(response));
+      this.audit(jobId,'handoff.response-recorded',response);return response;
+    });
+  }
   original(jobId:string,sourceId:string):Buffer { const s=this.get('sources',sourceId);if(s.jobId!==jobId)throw new InputError('別ジョブの原本です');const bytes=fs.readFileSync(path.join(this.root,'originals',s.hash+'.csv'));if(hash(bytes)!==s.hash)throw new Error('原本破損を検出しました');return bytes; }
   masterOriginal(jobId:string):Buffer { const m=this.master(jobId);if(!m)throw new InputError('取引先一覧は未取得です');const bytes=fs.readFileSync(path.join(this.root,'originals',m.hash+'.csv'));if(hash(bytes)!==m.hash)throw new Error('一覧原本破損を検出しました');return bytes; }
   async backup(destination:string) { const dir=path.resolve(destination);if(dir===this.root||dir.startsWith(this.root+path.sep))throw new InputError('データディレクトリ外を指定してください');if(fs.existsSync(dir))throw new InputError('新しいバックアップ先を指定してください');fs.mkdirSync(dir,{recursive:true});const target=path.join(dir,'app.sqlite');await backup(this.db,target);fs.cpSync(path.join(this.root,'originals'),path.join(dir,'originals'),{recursive:true,errorOnExist:true,force:false});fs.writeFileSync(path.join(dir,'manifest.json'),JSON.stringify({version:1,at:now(),databaseHash:hash(fs.readFileSync(target)),originalHashes:fs.readdirSync(path.join(dir,'originals')).map(f=>({file:f,hash:hash(fs.readFileSync(path.join(dir,'originals',f)))}))},null,2));return dir; }

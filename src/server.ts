@@ -7,6 +7,7 @@ import { Store } from './store.js';
 import { InputError, readCsv } from './domain.js';
 import { UnconnectedTkcAdapter, type TkcReadAdapter } from './adapters.js';
 import { seedDemo } from './demo.js';
+import { handoffCsv } from './handoff.js';
 
 export function createApp(store:Store,adapter:TkcReadAdapter=new UnconnectedTkcAdapter()) {
   const app=express();const token=randomBytes(32).toString('hex');
@@ -34,6 +35,9 @@ export function createApp(store:Store,adapter:TkcReadAdapter=new UnconnectedTkcA
   app.post('/api/csv/inspect',(req,res)=>{const parsed=readCsv(bytes(req.body),req.body.encoding,req.body.headerRow);res.json({headers:parsed.headers,sample:parsed.rows.slice(0,5),rowCount:parsed.rows.length});});
   app.get('/api/jobs/:jobId',(req,res)=>res.json(store.analysis(key(req.params.jobId))));
   app.get('/api/jobs/:jobId/report',(req,res)=>{res.set('Content-Disposition','attachment; filename="preview-report.json"');res.json(store.analysis(key(req.params.jobId)));});
+  app.get('/api/jobs/:jobId/handoff',(req,res)=>res.json(store.handoff(key(req.params.jobId))));
+  app.get('/api/jobs/:jobId/handoff.csv',(req,res)=>{res.set({'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="human-handoff.csv"'});res.send(handoffCsv(store.handoff(key(req.params.jobId))));});
+  app.post('/api/jobs/:jobId/handoff',(req,res)=>res.json(store.recordHandoff(key(req.params.jobId),req.body)));
   app.get('/api/jobs/:jobId/master/original',(req,res)=>{res.set({'Content-Type':'application/octet-stream','Content-Disposition':'attachment; filename="master-original.csv"'});res.send(store.masterOriginal(key(req.params.jobId)));});
   app.get('/api/jobs/:jobId/sources/:sourceId/original',(req,res)=>{res.set({'Content-Type':'application/octet-stream','Content-Disposition':'attachment; filename="original.csv"'});res.send(store.original(key(req.params.jobId),key(req.params.sourceId)));});
   app.post('/api/jobs/:jobId/bank',(req,res)=>res.json(store.importBank(key(req.params.jobId),bytes(req.body),req.body)));

@@ -1,5 +1,5 @@
 const $=id=>document.getElementById(id);
-let token='',jobId='',data=null,selected=new Set(),csvType='bank',csvBytes='',csvName='',activeTab='transactions';
+let token='',jobId='',data=null,handoffData=null,selected=new Set(),csvType='bank',csvBytes='',csvName='',activeTab='transactions';
 const money=v=>v===null?'—':new Intl.NumberFormat('ja-JP').format(v)+'円';
 const labels={review:'確認待ち',approved:'プレビュー承認',excluded:'アプリ内で保留・対象外',unknown:'保存結果不明',done:'計上完了','not-sent':'未送信',existing:'既存先',unresolved:'未確認'};
 function el(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n;}
@@ -8,7 +8,7 @@ async function api(url,body){const r=await fetch(url,{method:body===undefined?'G
 function safely(fn){return async e=>{e?.preventDefault();try{await fn(e);}catch(err){notice(err.message,true);}};}
 function jobUrl(action=''){return '/api/jobs/'+jobId+(action?'/'+action:'');}
 async function refreshJobs(){const jobs=await api('/api/jobs');$('job-list').replaceChildren(...jobs.map(j=>{const b=el('button',`${j.context.company}\n${j.context.start.slice(0,7)} · ${j.context.evidenceKind==='real'?'実データ':'模擬'}`,'job-item'+(j.id===jobId?' active':''));b.onclick=safely(()=>load(j.id));return b;}));}
-async function load(id){jobId=id;selected.clear();$('select-all').checked=false;data=await api(jobUrl());await refreshJobs();render();}
+async function load(id){jobId=id;selected.clear();$('select-all').checked=false;[data,handoffData]=await Promise.all([api(jobUrl()),api(jobUrl('handoff'))]);await refreshJobs();render();}
 function tab(name){activeTab=name;for(const panel of document.querySelectorAll('.tab-panel'))panel.hidden=panel.id!==name;for(const nav of document.querySelectorAll('[data-tab]'))nav.classList.toggle('active',nav.dataset.tab===name);}
 function render(){
   $('empty').hidden=true;$('workspace').hidden=false;const c=data.job.context;
@@ -19,7 +19,7 @@ function render(){
   $('stat-total').textContent=data.totals.count;$('source-count').textContent=`原本${data.sources.length}ファイル / ${data.sourceRowCount}行 / 重複照合で再利用${data.duplicateSightings}行`;
   $('stat-review').textContent=data.byState.review.count+data.byState.unknown.count;$('stat-tasks').textContent=data.tasks.length;$('stat-approved').textContent=data.byState.approved.count;
   $('report').href=jobUrl('report');$('report').setAttribute('download','preview-report.json');
-  renderTransactions();renderTasks();renderHistory();
+  renderTransactions();renderTasks();renderHandoff();renderHistory();
   $('state-totals').replaceChildren(...Object.entries(data.byState).map(([s,t])=>el('span',`${labels[s]} ${t.count}件 / 入${money(t.in)} / 出${money(t.out)}`,'state-row')));
   tab(activeTab);
 }
@@ -48,6 +48,25 @@ function renderHistory(){
   $('source-list').replaceChildren(...data.sources.map(s=>{const card=el('div',undefined,'source-card');card.append(el('strong',`${s.name} · ${s.rows}行 · ${s.encoding}`),el('small',' SHA-256: '+s.hash));const a=el('a',' 原本を保存 ↓','text-link');a.href=jobUrl(`sources/${s.id}/original`);card.append(a);return card;}));
   if(data.master){const m=data.master,card=el('div',undefined,'source-card');card.append(el('strong',`取引先一覧 ${m.entries.length}件`),el('p',`出典: ${m.evidence} / 取得日時: ${m.acquiredAt} / 確認者: ${m.actor}`));const a=el('a','一覧の原本を保存 ↓','text-link');a.href=jobUrl('master/original');card.append(a);$('source-list').append(card);}
   $('history-list').replaceChildren(...data.audit.map(a=>{const row=el('div',undefined,'history-row');row.append(el('span',new Date(a.at).toLocaleString('ja-JP')),el('strong',a.action),el('code',JSON.stringify(a.data)));return row;}));
+}
+function renderHandoff(){
+  const s=handoffData.summary;$('handoff-summary').textContent=`${s.items}件 / 優先確認 ${s.urgent}件 / 回答を再確認 ${s.responsesAwaitingReview}件`;
+  $('handoff-csv').href=jobUrl('handoff.csv');$('handoff-csv').download='human-handoff.csv';$('handoff-json').href=jobUrl('handoff');$('handoff-json').download='human-handoff.json';
+  $('handoff-list').replaceChildren(...handoffData.items.map(item=>{
+    const card=el('article',undefined,'handoff-card'+(item.priority==='urgent'?' urgent':''));card.dataset.handoffId=item.id;
+    card.append(el('h3',item.title),el('span',item.priority==='urgent'?'優先確認':'確認待ち','badge'),el('p',item.reasons.join(' / '),'handoff-reasons'));
+    card.append(el('p',`登録: ${labels[item.registrationState]||item.registrationState} / 仕訳: ${labels[item.journalState]||item.journalState}`),el('p','最後に確認できた段階: '+item.lastConfirmedStep));
+    for(const source of item.sources)card.append(el('small',`${source.file} ${source.row}〜${source.endRow}行 / SHA-256: ${source.hash}`,'handoff-source'));
+    for(const [title,values] of [['人が確認する項目',item.questions],['再開条件',item.resumeConditions]]){card.append(el('h4',title));const list=el('ul');for(const text of values)list.append(el('li',text));card.append(list);}
+    if(item.response){const r=item.response;card.append(el('p',`${r.owner} / ${r.status==='response-recorded'?'回答あり・再確認待ち':'担当者確認待ち'} / 記録者 ${r.actor}`,'handoff-answer'),el('p',r.note,'handoff-answer'));if(r.evidence)card.append(el('p','回答の根拠: '+r.evidence,'handoff-answer'));}
+    else if(item.history.length)card.append(el('p','内容が変わったため、以前の回答を再確認してください。以前の回答は詳細JSONと履歴に残っています。','handoff-reasons'));
+    const button=el('button','担当・回答を記録','secondary');button.onclick=()=>action('引継ぎの担当・回答を記録','中断中でも記録できます。回答は確認情報として保存し、TKCの完了状態や送信許可は変更しません。',()=>{
+      field('owner','担当者',item.response?.owner||'');field('status','回答状態',item.response?.status||'waiting',[['waiting','担当者確認待ち'],['response-recorded','回答あり・再確認待ち']]);
+      for(const [name,label] of [['note','回答・確認依頼'],['evidence','回答の根拠（回答ありでは必須）']]){const lab=el('label',label),input=el('textarea');input.name=name;input.rows=3;input.required=name==='note';input.value=item.response?.[name]||'';lab.append(input);$('action-fields').append(lab);}
+      field('actor','記録者');
+    },v=>api(jobUrl('handoff'),{...v,itemId:item.id,contentHash:item.contentHash}));card.append(button);return card;
+  }));
+  if(!handoffData.items.length)$('handoff-list').append(el('p','現在の確認対象はありません。TKCの計上完了は別途結果照合で確認します。','handoff-notice'));
 }
 function field(name,label,value='',options){const lab=el('label',label),input=el(options?'select':'input');input.name=name;input.required=true;if(options)for(const [v,t] of options){const op=el('option',t);op.value=v;input.append(op);}input.value=value;lab.append(input);$('action-fields').append(lab);return input;}
 let actionHandler=null;

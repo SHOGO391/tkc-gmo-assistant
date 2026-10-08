@@ -1,0 +1,30 @@
+import {test,expect} from 'playwright/test';
+
+test('Human handoff: record while paused, reload, export and leave TKC completion untouched',async({page})=>{
+  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/');await page.getByRole('button',{name:'模擬データで試す',exact:true}).click();
+  await expect(page.locator('#stat-total')).toHaveText('10');
+  await page.getByRole('button',{name:'人への引継ぎ',exact:true}).click();
+  await expect(page.locator('#handoff-list')).toContainText('TKC接続と計上前の確認');
+  await expect(page.locator('#handoff-list')).toContainText('不正金額の模擬行');
+  const card=page.locator('.handoff-card').first();
+  await page.getByRole('button',{name:'中断',exact:true}).click();
+  await card.getByRole('button',{name:'担当・回答を記録'}).click();
+  await page.locator('#action-form [name=owner]').fill('経理担当');
+  await page.locator('#action-form [name=status]').selectOption('response-recorded');
+  await page.locator('#action-form [name=note]').fill('TKCの製品名と対象月を確認予定\n保存結果は再送前に照合');
+  await page.locator('#action-form [name=evidence]').fill('模擬引継ぎテスト');
+  await page.locator('#action-form [name=actor]').fill('e2e-tester');
+  await page.getByRole('button',{name:'確認内容を保存',exact:true}).click();
+  await expect(card).toContainText('経理担当 / 回答あり・再確認待ち');
+  await page.reload();await page.getByRole('button',{name:'人への引継ぎ',exact:true}).click();
+  await expect(card).toContainText('保存結果は再送前に照合');
+  await expect(page.getByRole('button',{name:'再開',exact:true})).toBeVisible();
+  const download=page.waitForEvent('download');await page.getByRole('link',{name:'引継ぎCSV ↓',exact:true}).click();
+  expect((await download).suggestedFilename()).toBe('human-handoff.csv');
+  const href=await page.locator('#handoff-json').getAttribute('href');
+  const handoff=await (await page.request.get(href!)).json();
+  expect(handoff.liveExecutionAvailable).toBe(false);expect(handoff.summary.responsesAwaitingReview).toBe(1);
+  const a=await (await page.request.get('/api/jobs/'+handoff.jobId)).json();
+  expect(a.byState.done.count).toBe(0);expect(a.operations).toEqual([]);expect(errors).toEqual([]);
+});

@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GMO × TKC | 会計入力プレビュー</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GMO × TKC | 会計入力プレビュー</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/handoff.css"><script src="/app.js" defer></script></head>
 <body>
-<aside class="sidebar"><div class="brand"><span class="logo">G / T</span><strong>会計入力アシスト</strong><small>GMO × TKC</small></div><div class="side-label">ワークスペース</div><button class="nav active" data-tab="transactions">明細・仕訳案</button><button class="nav" data-tab="tasks">取引先登録案</button><button class="nav" data-tab="history">操作履歴</button><div class="side-label">処理ジョブ</div><div id="job-list"></div><button id="create-job" class="side-button">＋ 新しい月を開始</button><div class="side-note"><span class="dot"></span>P1 プレビュー専用<br><small>TKCへの書込みは0件です。<br>データはこのPC内に保存します。</small></div></aside>
+<aside class="sidebar"><div class="brand"><span class="logo">G / T</span><strong>会計入力アシスト</strong><small>GMO × TKC</small></div><div class="side-label">ワークスペース</div><button class="nav active" data-tab="transactions">明細・仕訳案</button><button class="nav" data-tab="tasks">取引先登録案</button><button class="nav" data-tab="handoff">人への引継ぎ</button><button class="nav" data-tab="history">操作履歴</button><div class="side-label">処理ジョブ</div><div id="job-list"></div><button id="create-job" class="side-button">＋ 新しい月を開始</button><div class="side-note"><span class="dot"></span>P1 プレビュー専用<br><small>TKCへの書込みは0件です。<br>データはこのPC内に保存します。</small></div></aside>
 <main>
 <header><div><div class="eyebrow">ACCOUNTING WORKSPACE / P1</div><h1>入力前に、まとめて確認。</h1><p>初めての取引先と、判断が必要な明細を見つけます。</p></div><button id="demo" class="secondary">模擬データで試す</button></header>
 <div id="notice" role="status" aria-live="polite"></div>
@@ -16,6 +16,7 @@
 <div class="table-wrap"><table><thead><tr><th><input id="select-all" type="checkbox" aria-label="表示中の明細をすべて選択"></th><th>日付 / 銀行ID</th><th>摘要 / 名義</th><th>入出金</th><th>取引先 / 登録</th><th>仕訳案</th><th>状態 / 要確認</th></tr></thead><tbody id="tx-body"></tbody></table></div><div class="panel-footer" id="totals"></div>
 </section>
 <section id="tasks" class="panel tab-panel" hidden><div class="panel-heading"><div><h2>取引先登録案</h2><p>確認済みの法人番号でまとめます。TKC向けの登録CSV形式は未確認です。</p></div></div><div id="task-list"></div></section>
+<section id="handoff" class="panel tab-panel" hidden><div class="panel-heading"><div><h2>人への引継ぎ</h2><p id="handoff-summary"></p></div><div class="handoff-downloads"><a id="handoff-csv" class="text-link">引継ぎCSV ↓</a><a id="handoff-json" class="text-link">詳細JSON ↓</a></div></div><p class="handoff-notice">担当者と回答を記録できます。回答だけでは登録・計上完了になりません。保存結果不明は再送せず、TKCの結果を照合します。</p><div id="handoff-list"></div></section>
 <section id="history" class="panel tab-panel" hidden><div class="panel-heading"><div><h2>操作履歴と原本</h2><p>重複取込み・確認・承認・中断と再開を保存します。</p></div></div><div id="source-list"></div><div id="history-list"></div></section>
 <section class="summary"><h3>同じ範囲での集計</h3><div id="state-totals"></div><p class="muted">未確認の既存仕訳・受信明細を「存在しない」とは扱いません。残高は原本の値を表示し、TKCとの照合は未実施です。未計上が残るため、この月は完了扱いになりません。</p></section>
 </div>
