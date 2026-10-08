@@ -4,7 +4,7 @@
 
 ## 実行結果
 
-- `npm run check`：TypeScriptビルド成功、ロジックテスト29件成功（従来23件＋引継ぎ6件）。
+- `npm run check`：TypeScriptビルド成功、ロジックテスト31件成功（従来23件＋引継ぎ6件＋環境診断2件）。
 - `npm run test:e2e`：Chromiumによるブラウザテスト5件成功（従来4件＋引継ぎ1件）。
 - `npm run build` 後の `npm start`：ローカル画面・APIの起動成功。HTTP 200と模擬明細10件の表示を確認。
 - 初期版はNode.js 24.21.0でもロジックテスト23件成功。今回の引継ぎ追加後はWindowsのNode.js 25.2.1で29件とブラウザ5件を実施。引継ぎ追加のコミット `9485387` はGitHub ActionsのWindows / Node.js 24でもビルド・29件・5件が成功した。
@@ -61,4 +61,6 @@
 
 2026-10-09、[診断テスト](../tests/doctor.test.ts)を追加し、Windowsで `npm run check` の31件が成功しました。診断は業務DBを開かず既存ファイルを保持し、書込み不可の保存先では失敗することを確認しました。診断結果は実TKC接続を未確認、業務書込みを無効として返します。
 
-配布ZIPは明示的なコード一覧、内部ハッシュ、ZIP全体のSHA-256、実行権限、LF改行、業務データの除外を検証します。macOS CIではZIPを展開し、公式のNode.js 24.21.0を実際に取得・SHA-256照合してから、依存パッケージの導入、診断、localhostでの起動を確認する構成です。利用者のMacのTKCログイン、拡張の接続、登録、仕訳計上、実CSVは対象外です。今回のmacOS CI結果は完了後に追記します。
+コミット `93ce680` の[macOSジョブ](https://github.com/SHOGO391/tkc-gmo-assistant/actions/runs/37862115059/job/113600040454)と[Windowsジョブ](https://github.com/SHOGO391/tkc-gmo-assistant/actions/runs/37862115059/job/113600040831)でビルド・31件・画面5件が成功しました。配布ZIPは明示的なコード一覧、内部ハッシュ、ZIP全体のSHA-256、実行権限、LF改行、業務データの除外の検証が成功しました。macOS CIではZIPを展開し、公式のNode.js 24.21.0を実際に取得・SHA-256照合してから、依存パッケージの導入、診断、localhostでの起動まで成功しました。Mac CIのCPUはarm64です。Intelの起動分岐は実装していますが、Intel実機での起動は未検証です。利用者のMacのTKCログイン、拡張の接続、登録、仕訳計上、実CSVは対象外です。
+
+[検証済みMac配布物](https://github.com/SHOGO391/tkc-gmo-assistant/actions/runs/37862115059/artifacts/11586484061)の内側のZIPはSHA-256 `21b4ad2e6c91dfc4e5c83847315c43316e19a2762166cb7946ec606d198e1e5a` です。Artifactの保持期間は14日です。実画面の確認と時間削減の測定は引き続き未完了です。

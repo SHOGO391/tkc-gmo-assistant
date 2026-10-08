@@ -77,7 +77,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-2026-10-09の結果は **ビルド成功、29件のロジックテスト、5件のブラウザテスト成功**。Windowsのローカル・CIと、GitHub ActionsのmacOS / Node.js 24で同じ検証が成功しました。テストは模擬データ専用です。利用者のMacと実TKCの受入完了を意味しません。項目ごとの確認範囲は [受入基準との対応](docs/acceptance.md) を参照してください。
+2026-10-09の結果は **ビルド成功、31件のロジックテスト、5件のブラウザテスト成功**。Windowsのローカル・CIと、GitHub ActionsのmacOS / Node.js 24で同じ検証が成功しました。MacのCIでは配布ZIPを展開し、Node.js 24.21.0の公式配布物を取得・ハッシュ照合したうえでlocalhost起動まで確認しました。[検証実行と配布物](https://github.com/SHOGO391/tkc-gmo-assistant/actions/runs/37862115059)。テストは模擬データ専用です。利用者のMacと実TKCの受入完了を意味しません。項目ごとの確認範囲は [受入基準との対応](docs/acceptance.md) を参照してください。
 
 ## バックアップと復元
 
