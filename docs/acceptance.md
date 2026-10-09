@@ -68,3 +68,5 @@
 ## 公開版の保存権限検証（2026-10-09）
 
 `tests/permissions.test.ts` は模擬データのみを使い、umask 022でもDB/WAL/SHM・原本・バックアップ・復元先・引継ぎCSVがPOSIXで所有者限定になること、既存データを失わず権限を修正すること、DBのシンボリックリンクを拒否することを検証します。WindowsでのNTFS ACLの隔離と実TKC接続はこのテストの検証対象外です。
+
+修正版 `53eae6f` の[Windows / macOS CI](https://github.com/SHOGO391/tkc-gmo-assistant/actions/runs/37900174230)は成功しています。ロジックテストはmacOS 34件成功、Windows 33件成功・POSIX専用1件スキップです。両OSでブラウザテスト5件と配布物の検証が成功しました。上の旧版の配布物に代わり、[修正版Mac ZIP](https://github.com/SHOGO391/tkc-gmo-assistant/actions/runs/37900174230/artifacts/11601961365)を使用してください。

@@ -8,7 +8,7 @@ Validation: npm run check (34 tests passed with synthetic data). Start: npm ci -
 
 Mac distribution: extracted ZIP, pinned Node 24.21.0 download/checksum, production dependencies, doctor and localhost startup passed on macOS arm64. Dependency audit: 0 vulnerabilities.
 
-Next: independent review and publication. Real TKC access and Windows ACL isolation remain unverified.
+Completed: independent Codex review, public push 53eae6f, Windows/macOS CI run 37900174230. Installation links now point to its fixed Mac artifact 11601961365. Real TKC access and Windows ACL isolation remain unverified.
 
 <!-- harness:start -->
 ## Harness
