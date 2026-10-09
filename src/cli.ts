@@ -4,6 +4,7 @@ import { Store } from './store.js';
 import { seedDemo } from './demo.js';
 import { UnconnectedTkcAdapter, executePlan } from './adapters.js';
 import { handoffCsv } from './handoff.js';
+import { privateDirectory, copyPrivateFile, copyPrivateOriginals } from './private-files.js';
 const [command,...args]=process.argv.slice(2);
 const store=new Store(process.env.DATA_DIR??'data');
 try {
@@ -14,7 +15,7 @@ try {
     case 'handoff_job': result=store.handoff(args[0]);break;
     case 'export_handoff': {
       if(!args[1])throw new Error('Specify a NEW local output file');
-      fs.writeFileSync(args[1],handoffCsv(store.handoff(args[0])),{encoding:'utf8',flag:'wx'});
+      fs.writeFileSync(args[1],handoffCsv(store.handoff(args[0])),{encoding:'utf8',flag:'wx',mode:0o600});
       result={file:path.resolve(args[1]),mode:'human-handoff',liveExecutionAvailable:false};break;
     }
     case 'pause_job': result=store.pause(args[0],true);break;
@@ -30,7 +31,7 @@ try {
       const {hash}=await import('./domain.js');
       if(manifest.version!==1||hash(fs.readFileSync(path.join(source,'app.sqlite')))!==manifest.databaseHash)throw new Error('Backup database hash mismatch');
       for(const item of manifest.originalHashes){if(!/^[a-f0-9]{64}\.csv$/.test(item.file)||hash(fs.readFileSync(path.join(source,'originals',item.file)))!==item.hash)throw new Error('Original hash mismatch');}
-      fs.mkdirSync(destination,{recursive:true});fs.copyFileSync(path.join(source,'app.sqlite'),path.join(destination,'app.sqlite'));fs.cpSync(path.join(source,'originals'),path.join(destination,'originals'),{recursive:true});
+      privateDirectory(destination);copyPrivateFile(path.join(source,'app.sqlite'),path.join(destination,'app.sqlite'));copyPrivateOriginals(path.join(source,'originals'),path.join(destination,'originals'));
       const restored=new Store(destination);try{for(const j of restored.jobs()){restored.pause(j.id,true);restored.observe(j.id,{available:false,observedAt:new Date().toISOString(),reason:'復元後です。未確定結果は再送せずTKCで照合してください'});}}finally{restored.close();}result={directory:destination,paused:true};break;
     }
     default: result={commands:['demo','get_job_status <job-id>','handoff_job <job-id>','export_handoff <job-id> <new-output.csv>','plan_job <job-id> <approval.json>','pause_job <job-id>','resume_job <job-id>','reconcile_job <job-id>','execute_plan (P1 rejects)','backup [destination]','restore <backup> <new-directory>']};

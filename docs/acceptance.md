@@ -64,3 +64,7 @@
 コミット `93ce680` の[macOSジョブ](https://github.com/SHOGO391/tkc-gmo-assistant/actions/runs/37862115059/job/113600040454)と[Windowsジョブ](https://github.com/SHOGO391/tkc-gmo-assistant/actions/runs/37862115059/job/113600040831)でビルド・31件・画面5件が成功しました。配布ZIPは明示的なコード一覧、内部ハッシュ、ZIP全体のSHA-256、実行権限、LF改行、業務データの除外の検証が成功しました。macOS CIではZIPを展開し、公式のNode.js 24.21.0を実際に取得・SHA-256照合してから、依存パッケージの導入、診断、localhostでの起動まで成功しました。Mac CIのCPUはarm64です。Intelの起動分岐は実装していますが、Intel実機での起動は未検証です。利用者のMacのTKCログイン、拡張の接続、登録、仕訳計上、実CSVは対象外です。
 
 [検証済みMac配布物](https://github.com/SHOGO391/tkc-gmo-assistant/actions/runs/37862115059/artifacts/11586484061)の内側のZIPはSHA-256 `21b4ad2e6c91dfc4e5c83847315c43316e19a2762166cb7946ec606d198e1e5a` です。Artifactの保持期間は14日です。実画面の確認と時間削減の測定は引き続き未完了です。
+
+## 公開版の保存権限検証（2026-10-09）
+
+`tests/permissions.test.ts` は模擬データのみを使い、umask 022でもDB/WAL/SHM・原本・バックアップ・復元先・引継ぎCSVがPOSIXで所有者限定になること、既存データを失わず権限を修正すること、DBのシンボリックリンクを拒否することを検証します。WindowsでのNTFS ACLの隔離と実TKC接続はこのテストの検証対象外です。

@@ -36,7 +36,7 @@ npm start
 
 ```powershell
 $env:PORT = '4317'
-$env:DATA_DIR = 'C:/Users/kutip/tkc-gmo-local-data'
+$env:DATA_DIR = 'C:/Users/YourName/tkc-gmo-local-data'
 npm run dev
 ```
 
@@ -84,9 +84,9 @@ npm run test:e2e
 同じデータを使う他のサーバー・CLIの変更操作を止めてから実行します。CSVとDBをGitに入れず、バックアップもPC内で管理します。
 
 ```powershell
-npm run backup -- C:/Users/kutip/tkc-gmo-backup-20261008
-npm run cli -- restore C:/Users/kutip/tkc-gmo-backup-20261008 C:/Users/kutip/tkc-gmo-restored-20261008
-$env:DATA_DIR = 'C:/Users/kutip/tkc-gmo-restored-20261008'
+npm run backup -- C:/Users/YourName/tkc-gmo-backup-20261008
+npm run cli -- restore C:/Users/YourName/tkc-gmo-backup-20261008 C:/Users/YourName/tkc-gmo-restored-20261008
+$env:DATA_DIR = 'C:/Users/YourName/tkc-gmo-restored-20261008'
 npm run dev
 ```
 
@@ -111,3 +111,11 @@ npm run cli -- resume_job JOB_ID
 - [引継ぎメモ](docs/decisions.md)：判断と次の操作。
 
 現時点では、TKC用CSV出力、実TKCの登録・計上・保存結果読戻し、既存仕訳・受信明細の取得、複合・分割仕訳、ルール修正画面、個人事業者の新規登録、Jev連携は未実装です。法人番号や根拠が足りない新規先は保留します。作業時間70%削減と月次残高の一致は、実データで別途測定・検証します。
+
+## 公開版のセキュリティとライセンス
+
+このプレビューは実TKCへの書込みを行いません。実データのCSV・DB・バックアップ・引継ぎ出力はGitや公開Issueへ添付しないでください。
+
+`DATA_DIR` にはアプリ専用のディレクトリを指定してください。macOS/Linuxでは起動時に専用ディレクトリを0700、DB・原本を0600へ制限し、既存の広い権限も修正します。バックアップ・復元先と引継ぎCSVにも同じ保護を適用します。Windowsではこれらのモード値だけでは他ユーザーを排除できないため、本人だけにアクセスを許可したユーザープロファイル配下とNTFSアクセス権を使用してください。同じOSアカウントの別プロセスからのアクセスや暗号化には対応していません。
+
+MIT License（[LICENSE](LICENSE)）。依存ライブラリの権利表示は各パッケージに従います。非公開の脆弱性報告は [SECURITY.md](SECURITY.md) を参照してください。

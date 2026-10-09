@@ -29,7 +29,7 @@ def verify_contents():
             PREFIX + "bundle-manifest.json", PREFIX + ".mac-preview-bundle",
         }, "Unexpected ZIP entries"
         permitted_roots = {"src", "dist", "web", "docs", "scripts", "tests"}
-        permitted_top = {"README.md", "AGENTS.md", "package.json", "package-lock.json", "Start-Mac.command", "tsconfig.json", "playwright.config.ts", "bundle-manifest.json", ".mac-preview-bundle"}
+        permitted_top = {"README.md", "LICENSE", "SECURITY.md", "AGENTS.md", "package.json", "package-lock.json", "Start-Mac.command", "tsconfig.json", "playwright.config.ts", "bundle-manifest.json", ".mac-preview-bundle"}
         for name in names:
             relative = PurePosixPath(name.removeprefix(PREFIX))
             assert name.startswith(PREFIX) and not relative.is_absolute() and ".." not in relative.parts

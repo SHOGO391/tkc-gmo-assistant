@@ -1,6 +1,7 @@
 import { DatabaseSync, backup } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { privateDirectory, privateFile, privateOriginals, copyPrivateOriginals } from './private-files.js';
 import { buildHandoff } from './handoff.js';
 import { InputError, hash, canonicalJson, id, now, norm, required, validateContext, readCsv, checkMapping, normalizeRow, type CsvMapping, type Encoding, type JobContext, type Rule } from './domain.js';
 
@@ -10,8 +11,14 @@ export class Store {
   root: string;
   constructor(root: string) {
     this.root = path.resolve(root);
-    fs.mkdirSync(path.join(this.root, 'originals'), { recursive: true });
-    this.db = new DatabaseSync(path.join(this.root, 'app.sqlite'));
+    privateDirectory(this.root);
+    privateOriginals(path.join(this.root, 'originals'));
+    const database = path.join(this.root, 'app.sqlite');
+    // Create with restrictive permissions before SQLite can put any data in it.
+    try { fs.closeSync(fs.openSync(database, 'wx', 0o600)); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; }
+    for (const suffix of ['', '-wal', '-shm', '-journal']) privateFile(database + suffix);
+    this.db = new DatabaseSync(database);
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
       CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS sources(id TEXT PRIMARY KEY, job_id TEXT NOT NULL REFERENCES jobs(id), hash TEXT NOT NULL, data TEXT NOT NULL, UNIQUE(job_id,hash));
@@ -28,6 +35,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS handoff_notes(seq INTEGER PRIMARY KEY AUTOINCREMENT, job_id TEXT NOT NULL REFERENCES jobs(id), data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS audit(seq INTEGER PRIMARY KEY AUTOINCREMENT, job_id TEXT NOT NULL REFERENCES jobs(id), at TEXT NOT NULL, action TEXT NOT NULL, data TEXT NOT NULL);
       PRAGMA user_version=1;`);
+    for (const suffix of ['', '-wal', '-shm', '-journal']) privateFile(database + suffix);
   }
   close() { this.db.close(); }
   row(sql: string, ...args: any[]): any { return this.db.prepare(sql).get(...args); }
@@ -254,5 +262,17 @@ export class Store {
   }
   original(jobId:string,sourceId:string):Buffer { const s=this.get('sources',sourceId);if(s.jobId!==jobId)throw new InputError('別ジョブの原本です');const bytes=fs.readFileSync(path.join(this.root,'originals',s.hash+'.csv'));if(hash(bytes)!==s.hash)throw new Error('原本破損を検出しました');return bytes; }
   masterOriginal(jobId:string):Buffer { const m=this.master(jobId);if(!m)throw new InputError('取引先一覧は未取得です');const bytes=fs.readFileSync(path.join(this.root,'originals',m.hash+'.csv'));if(hash(bytes)!==m.hash)throw new Error('一覧原本破損を検出しました');return bytes; }
-  async backup(destination:string) { const dir=path.resolve(destination);if(dir===this.root||dir.startsWith(this.root+path.sep))throw new InputError('データディレクトリ外を指定してください');if(fs.existsSync(dir))throw new InputError('新しいバックアップ先を指定してください');fs.mkdirSync(dir,{recursive:true});const target=path.join(dir,'app.sqlite');await backup(this.db,target);fs.cpSync(path.join(this.root,'originals'),path.join(dir,'originals'),{recursive:true,errorOnExist:true,force:false});fs.writeFileSync(path.join(dir,'manifest.json'),JSON.stringify({version:1,at:now(),databaseHash:hash(fs.readFileSync(target)),originalHashes:fs.readdirSync(path.join(dir,'originals')).map(f=>({file:f,hash:hash(fs.readFileSync(path.join(dir,'originals',f)))}))},null,2));return dir; }
+  async backup(destination:string) {
+    const dir=path.resolve(destination);
+    if(dir===this.root||dir.startsWith(this.root+path.sep))throw new InputError('データディレクトリ外を指定してください');
+    if(fs.existsSync(dir))throw new InputError('新しいバックアップ先を指定してください');
+    privateDirectory(dir);
+    const target=path.join(dir,'app.sqlite');
+    fs.closeSync(fs.openSync(target,'wx',0o600));
+    await backup(this.db,target);
+    privateFile(target);
+    copyPrivateOriginals(path.join(this.root,'originals'),path.join(dir,'originals'));
+    fs.writeFileSync(path.join(dir,'manifest.json'),JSON.stringify({version:1,at:now(),databaseHash:hash(fs.readFileSync(target)),originalHashes:fs.readdirSync(path.join(dir,'originals')).map(f=>({file:f,hash:hash(fs.readFileSync(path.join(dir,'originals',f)))}))},null,2),{flag:'wx',mode:0o600});
+    return dir;
+  }
 }

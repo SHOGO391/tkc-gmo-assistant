@@ -12,14 +12,15 @@ PREFIX = "tkc-gmo-assistant/"
 
 
 def allowed_files():
-    fixed = ["README.md", "AGENTS.md", "package.json", "package-lock.json", "Start-Mac.command", "tsconfig.json", "playwright.config.ts"]
+    fixed = ["README.md", "LICENSE", "SECURITY.md", "AGENTS.md", "package.json", "package-lock.json", "Start-Mac.command", "tsconfig.json", "playwright.config.ts"]
     paths = [ROOT / name for name in fixed]
     for directory, pattern in [
         ("src", "*.ts"), ("dist/src", "*.js"), ("web", "*.html"),
         ("web", "*.js"), ("web", "*.css"), ("docs", "*.md"),
         ("scripts", "*.py"), ("tests", "*.test.ts"), ("tests/browser", "*.spec.ts"),
     ]:
-        paths.extend(sorted((ROOT / directory).glob(pattern)))
+        # Local task status changes during verification and is not user documentation.
+        paths.extend(p for p in sorted((ROOT / directory).glob(pattern)) if p != ROOT / "docs/STATUS.md")
     for path in paths:
         if not path.is_file() or path.is_symlink():
             raise RuntimeError(f"Missing or symlinked bundle input: {path.relative_to(ROOT)}")
